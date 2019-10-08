@@ -97,7 +97,9 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win) {
 			fprintf(logFile, "Mouse (%d, %d, %d)\n", mouseEvent.x, mouseEvent.y, mouseEvent.z);
 			fflush(logFile);
 
-			(* grid)[mouseEvent.y][mouseEvent.x] = ALIVE_CHAR;
+			
+			char *cell = &(* grid)[mouseEvent.y][mouseEvent.x];
+			*cell = *cell == ALIVE_CHAR ? DEAD_CHAR : ALIVE_CHAR;
 		}
 	} else if(ch == ' ') {
 		paused = !paused;
