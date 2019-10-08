@@ -1,4 +1,6 @@
 main
+log.txt
+.vscode/
 
 # Prerequisites
 *.d
