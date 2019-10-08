@@ -44,15 +44,15 @@ int main(void)
 
 	clear_grid(&grid);
 
+	fprintf(logFile, "Started, has mouse: %d\n", has_mouse());
+	fflush(logFile);
+
 	while(TRUE)
 	{
 		processInput(&grid, win);
 		print_grid(&grid, win);
 		wrefresh(win);
 	}
-
-	fprintf(logFile, "Started, has mouse: %d\n", has_mouse());
-	fflush(logFile);
 
     return 0;
 }
