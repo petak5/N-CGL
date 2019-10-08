@@ -1,3 +1,4 @@
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <ncurses.h>
@@ -80,6 +81,9 @@ int main(void)
 			fprintf(logFile, "Diff: %f\n", millisDiff);
 			fflush(logFile);
 		}
+
+		//TODO Maybe: Replace usleep since it's deprecated
+		usleep(16000); //cap it at 60 fps (1000 millis / 60 = 16.66 ms)
 	}
 
     return 0;
