@@ -9,7 +9,9 @@ void exit_handler() {
 
 void processInput(char (*grid)[LINES][COLS], WINDOW *win);
 void clear_grid(char (* grid)[LINES][COLS]);
+void iterate_grid(char (* grid)[LINES][COLS]);
 void print_grid(char (* grid)[LINES][COLS], WINDOW * win);
+int neighbours_count(char (* grid)[LINES][COLS], int y, int x);
 
 FILE* logFile;
 
@@ -44,14 +46,25 @@ int main(void)
 
 	clear_grid(&grid);
 
-	fprintf(logFile, "Started, has mouse: %d\n", has_mouse());
+	//fprintf(logFile, "Started, has mouse: %d\n", has_mouse());
 	fflush(logFile);
+
+	/* A glider
+	grid[10][10] = ALIVE_CHAR;
+	grid[12][10] = ALIVE_CHAR;
+	grid[12][11] = ALIVE_CHAR;
+	grid[11][11] = ALIVE_CHAR;
+	grid[11][12] = ALIVE_CHAR;
+	*/
 
 	while(TRUE)
 	{
 		processInput(&grid, win);
 		print_grid(&grid, win);
 		wrefresh(win);
+		// TODO: Implement better speed mechanism, that allows to use miliseconds and doesn't block rendering pipeline
+		sleep(1);
+		iterate_grid(&grid);
 	}
 
     return 0;
@@ -80,6 +93,34 @@ void clear_grid(char (* grid)[LINES][COLS])
 	}
 }
 
+void iterate_grid(char (* grid)[LINES][COLS])
+{
+	// An array consisting of the number of alive cells for each cell
+	char temp_count[LINES][COLS];
+
+	// Get the alive neighbour cells counts populated into the array
+	for (int i = 0; i < LINES; i++) {
+		for (int j = 0; j < COLS; j++) {
+			temp_count[i][j] = neighbours_count(grid, i, j);
+		}
+	}
+
+	// Apply the rules and update the board
+	for (int i = 0; i < LINES; i++) {
+		for (int j = 0; j < COLS; j++) {
+			if (temp_count[i][j] < 2) {
+				(* grid)[i][j] = DEAD_CHAR;
+			}
+			if (temp_count[i][j] > 3) {
+				(* grid)[i][j] = DEAD_CHAR;
+			}
+			if (temp_count[i][j] == 3) {
+				(* grid)[i][j] = ALIVE_CHAR;
+			}
+		}
+	}
+}
+
 void print_grid(char (* grid)[LINES][COLS], WINDOW * win)
 {
 	for (int i = 0; i < LINES; i++) {
@@ -87,4 +128,64 @@ void print_grid(char (* grid)[LINES][COLS], WINDOW * win)
 			mvwprintw(win, i, j, "%c", (* grid)[i][j]);
 		}
 	}
+}
+
+/* Returns the number of alive cels next to [x, y] cell */
+int neighbours_count(char (* grid)[LINES][COLS], int y, int x)
+{
+	int count = 0;
+
+	/* Horizontal */
+	// Left
+	if (x > 0) {
+		if ((* grid)[y][x - 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	// Right
+	if (x < COLS) {
+		if ((* grid)[y][x + 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	/* Vertical */
+	// Top
+	if (y > 0) {
+		if ((* grid)[y - 1][x] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	// Bottom
+	if (y < LINES) {
+		if ((* grid)[y + 1][x] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	/* Diagonal */
+	// Top Left
+	if ((x > 0) && (y > 0)) {
+		if ((* grid)[y - 1][x - 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	// Top Right
+	if ((x < COLS) && (y > 0)) {
+		if ((* grid)[y - 1][x + 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	// Bottom Left
+	if ((x > 0) && (y <LINES)) {
+		if ((* grid)[y + 1][x - 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+	// Bottm Right
+	if ((x < COLS) && (y < LINES)) {
+		if ((* grid)[y + 1][x + 1] == ALIVE_CHAR) {
+			count++;
+		}
+	}
+
+	return count;
 }
