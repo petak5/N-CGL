@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <string.h>
 
 void exit_handler() {
 	endwin();
@@ -17,6 +19,10 @@ FILE* logFile;
 
 #define ALIVE_CHAR '*'
 #define DEAD_CHAR ' '
+
+int simulation_interval_millis = 20;
+
+int paused;
 
 int main(void)
 {
@@ -46,8 +52,6 @@ int main(void)
 
 	clear_grid(&grid);
 
-	//fprintf(logFile, "Started, has mouse: %d\n", has_mouse());
-	fflush(logFile);
 
 	/* A glider
 	grid[10][10] = ALIVE_CHAR;
@@ -57,14 +61,25 @@ int main(void)
 	grid[11][12] = ALIVE_CHAR;
 	*/
 
+	struct timeval lastUpdate, currentTime;
+	memset(&lastUpdate, 0, sizeof(lastUpdate));
+
 	while(TRUE)
 	{
 		processInput(&grid, win);
 		print_grid(&grid, win);
 		wrefresh(win);
-		// TODO: Implement better speed mechanism, that allows to use miliseconds and doesn't block rendering pipeline
-		sleep(1);
-		iterate_grid(&grid);
+
+		gettimeofday(&currentTime, NULL);
+		float millisDiff = (currentTime.tv_sec - lastUpdate.tv_sec) * 1000.0f + (currentTime.tv_usec - lastUpdate.tv_usec) / 1000.0f;
+		
+		if(millisDiff > simulation_interval_millis && !paused) {
+			memcpy(&lastUpdate, &currentTime, sizeof(currentTime));
+			iterate_grid(&grid);
+
+			fprintf(logFile, "Diff: %f\n", millisDiff);
+			fflush(logFile);
+		}
 	}
 
     return 0;
@@ -80,6 +95,16 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win) {
 
 			(* grid)[mouseEvent.y][mouseEvent.x] = ALIVE_CHAR;
 		}
+	} else if(ch == ' ') {
+		paused = !paused;
+	} else if(ch == '-') {
+		if(simulation_interval_millis < 1) { //if it's 0, then doubling it is useless
+			simulation_interval_millis = 1;
+		} else {
+			simulation_interval_millis *= 2; //Slow it down
+		}
+	} else if(ch == '=') {
+		simulation_interval_millis /= 2; //Speed it up
 	}
 }
 
