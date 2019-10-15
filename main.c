@@ -111,6 +111,9 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win) {
 		}
 	} else if(ch == '=') {
 		simulation_interval_millis /= 2; //Speed it up
+	} else if(ch == 'q') {
+		endwin();
+		exit(0);
 	}
 }
 
