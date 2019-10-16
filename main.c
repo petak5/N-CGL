@@ -10,13 +10,16 @@ void exit_handler() {
 	endwin();
 }
 
-void processInput(char (*grid)[LINES][COLS], WINDOW *win);
+void processInput(char (* grid)[LINES][COLS], WINDOW *win);
 void clear_grid(char (* grid)[LINES][COLS]);
 void iterate_grid(char (* grid)[LINES][COLS]);
 void print_grid(char (* grid)[LINES][COLS], WINDOW * win);
 int neighbours_count(char (* grid)[LINES][COLS], int y, int x);
+void save_grid(char (* grid)[LINES][COLS], char filename[]);
+void load_grid(char (* grid)[LINES][COLS], char filename[]);
 
-FILE* logFile;
+
+FILE *logFile;
 
 #define ALIVE_CHAR '*'
 #define DEAD_CHAR ' '
@@ -53,14 +56,9 @@ int main(void)
 
 	clear_grid(&grid);
 
-
-	/* A glider
-	grid[10][10] = ALIVE_CHAR;
-	grid[12][10] = ALIVE_CHAR;
-	grid[12][11] = ALIVE_CHAR;
-	grid[11][11] = ALIVE_CHAR;
-	grid[11][12] = ALIVE_CHAR;
-	*/
+	// TODO: handle this with program arguments or an UI
+	// Load grid from savefile
+	load_grid(&grid, "saves/savefile");
 
 	struct timeval lastUpdate, currentTime;
 	memset(&lastUpdate, 0, sizeof(lastUpdate));
@@ -89,7 +87,7 @@ int main(void)
     return 0;
 }
 
-void processInput(char (*grid)[LINES][COLS], WINDOW *win) {
+void processInput(char (* grid)[LINES][COLS], WINDOW *win) {
 	int ch = wgetch(win);
 	if(ch == KEY_MOUSE) {
 		MEVENT mouseEvent;
@@ -114,6 +112,8 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win) {
 	} else if(ch == 'q') {
 		endwin();
 		exit(0);
+	} else if (ch == 's') {
+		save_grid(grid, "saves/savefile");
 	}
 }
 
@@ -222,4 +222,16 @@ int neighbours_count(char (* grid)[LINES][COLS], int y, int x)
 	}
 
 	return count;
+}
+
+//TODO: check if the filename is valid / if file was opened successfully
+void save_grid(char (* grid)[LINES][COLS], char filename[])
+{
+	FILE *file = fopen(filename, "wb");
+	fwrite(grid, sizeof(char), LINES * COLS, file);
+}
+void load_grid(char (* grid)[LINES][COLS], char filename[])
+{
+	FILE *file = fopen(filename, "rb");
+	fread(grid, sizeof(char), LINES * COLS, file);
 }
