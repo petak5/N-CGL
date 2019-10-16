@@ -25,6 +25,17 @@ FILE *logFile;
 int simulation_interval_millis = 20;
 
 int paused;
+int stepBackwards, stepForwards;
+
+#define HISTORY_SIZE 100
+void *history[HISTORY_SIZE];
+bool historyValid[HISTORY_SIZE];
+
+uint32_t gridSize;
+int historyIndex = 0;
+
+void insertHistory(void *gridState);
+void popHistory(void *grid);
 
 int main(void)
 {
@@ -51,8 +62,8 @@ int main(void)
 	}
 
 	char grid[LINES][COLS];
-
 	clear_grid(&grid);
+	gridSize = sizeof(char) * LINES * COLS;
 
 	/* A glider
 	grid[10][10] = ALIVE_CHAR;
@@ -74,7 +85,17 @@ int main(void)
 		gettimeofday(&currentTime, NULL);
 		float millisDiff = (currentTime.tv_sec - lastUpdate.tv_sec) * 1000.0f + (currentTime.tv_usec - lastUpdate.tv_usec) / 1000.0f;
 
-		if (millisDiff > simulation_interval_millis && !paused)
+		if (paused && stepForwards)
+		{
+			iterate_grid(&grid);
+			stepForwards = false;
+		}
+		else if (paused && stepBackwards)
+		{
+			popHistory(grid);
+			stepBackwards = false;
+		}
+		else if (millisDiff > simulation_interval_millis && !paused)
 		{
 			memcpy(&lastUpdate, &currentTime, sizeof(currentTime));
 			iterate_grid(&grid);
@@ -124,6 +145,14 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win)
 	{
 		simulation_interval_millis /= 2; //Speed it up
 	}
+	else if (ch == KEY_LEFT)
+	{
+		stepBackwards = true;
+	}
+	else if (ch == KEY_RIGHT)
+	{
+		stepForwards = true;
+	}
 }
 
 void clear_grid(char (*grid)[LINES][COLS])
@@ -140,6 +169,9 @@ void clear_grid(char (*grid)[LINES][COLS])
 
 void iterate_grid(char (*grid)[LINES][COLS])
 {
+	//Add the current grid to history
+	insertHistory(grid);
+
 	// An array consisting of the number of alive cells for each cell
 	char temp_count[LINES][COLS];
 
@@ -258,4 +290,32 @@ int neighbours_count(char (*grid)[LINES][COLS], int y, int x)
 	}
 
 	return count;
+}
+
+void insertHistory(void *gridState)
+{
+	//HistoryIndex points to the next available area to save the history
+
+	if (history[historyIndex] == NULL)
+	{
+		history[historyIndex] = malloc(gridSize);
+	}
+	memcpy(history[historyIndex], gridState, gridSize);
+	historyValid[historyIndex] = true;
+
+	historyIndex = (historyIndex + 1) % HISTORY_SIZE;
+}
+void popHistory(void *grid)
+{
+	historyIndex -= 1;
+	if (historyIndex < 0)
+	{
+		historyIndex = HISTORY_SIZE - 1;
+	}
+
+	if (history[historyIndex] != NULL && historyValid[historyIndex]) //We need historyValid because
+	{
+		memcpy(grid, history[historyIndex], gridSize);
+		historyValid[historyIndex] = false;
+	}
 }
