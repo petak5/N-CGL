@@ -1,16 +1,14 @@
 CC=gcc
 LIBS=-lcurses
-CFLAGS=-std=c99 -Wall -Wextra -Werror
+CFLAGS=-std=c99 -Wall -Wextra -Werror -g
 
 all: main
 
 main: main.o
-	clear
-	$(CC) $(CFLAGS) $(LIBS) main.o -o main
+	$(CC) $(CFLAGS) $(LIBS) $^ -o main
 
-main.o: main.c
-	clear
-	$(CC) $(CFLAGS) main.c -c -o main.o
+%.o: %.c
+	$(CC) $(CFLAGS) $< -c -o $@
 
 run: main
 	./main
