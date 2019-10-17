@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 void exit_handler()
 {
@@ -16,8 +18,8 @@ void clear_grid(char (*grid)[LINES][COLS]);
 void iterate_grid(char (*grid)[LINES][COLS]);
 void print_grid(char (*grid)[LINES][COLS], WINDOW *win);
 int neighbours_count(char (*grid)[LINES][COLS], int y, int x);
-void save_grid(char (*grid)[LINES][COLS], char filename[]);
-void load_grid(char (*grid)[LINES][COLS], char filename[]);
+void save_grid(char (*grid)[LINES][COLS], char path[]);
+void load_grid(char (*grid)[LINES][COLS], char path[]);
 
 FILE *logFile;
 
@@ -38,6 +40,8 @@ int historyIndex = 0;
 
 void insertHistory(void *gridState);
 void popHistory(void *grid);
+
+#define SAVES_DIR "saves/"
 
 int main(void)
 {
@@ -70,7 +74,6 @@ int main(void)
 
 	// TODO: handle this with program arguments or an UI
 	// Load grid from savefile
-	// TODO: need to check if the file exists
 	//load_grid(&grid, "saves/savefile");
 
 	struct timeval lastUpdate, currentTime;
@@ -325,15 +328,48 @@ void popHistory(void *grid)
 	}
 }
 
-//TODO: check if the filename is valid / if file was opened successfully
-void save_grid(char (*grid)[LINES][COLS], char filename[])
+void save_grid(char (*grid)[LINES][COLS], char path[])
 {
-	FILE *file = fopen(filename, "wb");
+	// Check if the directory already exists
+	struct stat st = {0};
+	if (stat(SAVES_DIR, &st) == -1)
+	{
+		// Try to create the directory
+		if (mkdir(SAVES_DIR, 0700) != 0)
+		{
+			exit_handler();
+			printf("Failed to create saves directory `%s`\n", SAVES_DIR);
+			exit(errno);
+		}
+	}
+
+	FILE *file = fopen(path, "wb");
+	if (file == NULL)
+	{
+		exit_handler();
+		printf("Failed to save to savefile `%s`\n", path);
+		exit(errno);
+	}
+
 	fwrite(grid, sizeof(char), LINES * COLS, file);
 }
 
-void load_grid(char (*grid)[LINES][COLS], char filename[])
+void load_grid(char (*grid)[LINES][COLS], char path[])
 {
-	FILE *file = fopen(filename, "rb");
+	// Check if the savefile exists
+	struct stat st = {0};
+	if (stat(path, &st) == -1)
+	{
+		exit_handler();
+		printf("Failed to load from savefile `%s`, no such file found", path);
+	}
+
+	FILE *file = fopen(path, "rb");
+	if (file == NULL)
+	{
+		exit_handler();
+		printf("Failed to load from savefile `%s`\n", path);
+		exit(errno);
+	}
 	fread(grid, sizeof(char), LINES * COLS, file);
 }
