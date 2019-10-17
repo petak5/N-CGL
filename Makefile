@@ -13,5 +13,5 @@ main: main.o
 run: main
 	./main
 
-clean: main main.o
+clean:
 	rm main main.o
