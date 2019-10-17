@@ -70,7 +70,8 @@ int main(void)
 
 	// TODO: handle this with program arguments or an UI
 	// Load grid from savefile
-	load_grid(&grid, "saves/savefile");
+	// TODO: need to check if the file exists
+	//load_grid(&grid, "saves/savefile");
 
 	struct timeval lastUpdate, currentTime;
 	memset(&lastUpdate, 0, sizeof(lastUpdate));
@@ -325,12 +326,13 @@ void popHistory(void *grid)
 }
 
 //TODO: check if the filename is valid / if file was opened successfully
-void save_grid(char (* grid)[LINES][COLS], char filename[])
+void save_grid(char (*grid)[LINES][COLS], char filename[])
 {
 	FILE *file = fopen(filename, "wb");
 	fwrite(grid, sizeof(char), LINES * COLS, file);
 }
-void load_grid(char (* grid)[LINES][COLS], char filename[])
+
+void load_grid(char (*grid)[LINES][COLS], char filename[])
 {
 	FILE *file = fopen(filename, "rb");
 	fread(grid, sizeof(char), LINES * COLS, file);
