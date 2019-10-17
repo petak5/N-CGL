@@ -16,6 +16,8 @@ void clear_grid(char (*grid)[LINES][COLS]);
 void iterate_grid(char (*grid)[LINES][COLS]);
 void print_grid(char (*grid)[LINES][COLS], WINDOW *win);
 int neighbours_count(char (*grid)[LINES][COLS], int y, int x);
+void save_grid(char (*grid)[LINES][COLS], char filename[]);
+void load_grid(char (*grid)[LINES][COLS], char filename[]);
 
 FILE *logFile;
 
@@ -63,15 +65,12 @@ int main(void)
 
 	char grid[LINES][COLS];
 	clear_grid(&grid);
+
 	gridSize = sizeof(char) * LINES * COLS;
 
-	/* A glider
-	grid[10][10] = ALIVE_CHAR;
-	grid[12][10] = ALIVE_CHAR;
-	grid[12][11] = ALIVE_CHAR;
-	grid[11][11] = ALIVE_CHAR;
-	grid[11][12] = ALIVE_CHAR;
-	*/
+	// TODO: handle this with program arguments or an UI
+	// Load grid from savefile
+	load_grid(&grid, "saves/savefile");
 
 	struct timeval lastUpdate, currentTime;
 	memset(&lastUpdate, 0, sizeof(lastUpdate));
@@ -144,6 +143,11 @@ void processInput(char (*grid)[LINES][COLS], WINDOW *win)
 	else if (ch == '=')
 	{
 		simulation_interval_millis /= 2; //Speed it up
+	} else if(ch == 'q') {
+		endwin();
+		exit(0);
+	} else if (ch == 's') {
+		save_grid(grid, "saves/savefile");
 	}
 	else if (ch == KEY_LEFT)
 	{
@@ -318,4 +322,16 @@ void popHistory(void *grid)
 		memcpy(grid, history[historyIndex], gridSize);
 		historyValid[historyIndex] = false;
 	}
+}
+
+//TODO: check if the filename is valid / if file was opened successfully
+void save_grid(char (* grid)[LINES][COLS], char filename[])
+{
+	FILE *file = fopen(filename, "wb");
+	fwrite(grid, sizeof(char), LINES * COLS, file);
+}
+void load_grid(char (* grid)[LINES][COLS], char filename[])
+{
+	FILE *file = fopen(filename, "rb");
+	fread(grid, sizeof(char), LINES * COLS, file);
 }

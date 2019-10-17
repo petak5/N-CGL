@@ -1,5 +1,6 @@
 main
 log.txt
+saves/
 .vscode/
 
 # Prerequisites
